@@ -1,0 +1,92 @@
+{
+  "opportunities": [
+    {
+      "product_id": 1,
+      "hs_code": "081010",
+      "product_name": "Fresh Strawberries",
+      "sector": "agriculture",
+      "opportunity_score": 88.5,
+      "rank": 1,
+      "import_cost": {
+        "value": 350.00,
+        "currency": "INR",
+        "unit": "KG"
+      },
+      "domestic_cost": {
+        "value": 220.00,
+        "currency": "INR",
+        "unit": "KG"
+      },
+      "potential_savings_percentage": 37.14,
+      "feasibility": "high",
+      "confidence": "high",
+      "top_production_region": "Satara, Maharashtra"
+    },
+    {
+      "product_id": 2,
+      "hs_code": "850440",
+      "product_name": "Static Converters & Solar Inverters",
+      "sector": "electronics",
+      "opportunity_score": 84.2,
+      "rank": 2,
+      "import_cost": {
+        "value": 3740.00,
+        "currency": "INR",
+        "unit": "PIECES"
+      },
+      "domestic_cost": {
+        "value": 2690.00,
+        "currency": "INR",
+        "unit": "PIECES"
+      },
+      "potential_savings_percentage": 28.07,
+      "feasibility": "high",
+      "confidence": "high",
+      "top_production_region": "Kanchipuram, Tamil Nadu"
+    },
+    {
+      "product_id": 3,
+      "hs_code": "293399",
+      "product_name": "Heterocyclic Active Pharmaceutical Ingredients",
+      "sector": "chemicals",
+      "opportunity_score": 81.0,
+      "rank": 3,
+      "import_cost": {
+        "value": 10020.00,
+        "currency": "INR",
+        "unit": "KG"
+      },
+      "domestic_cost": {
+        "value": 7450.00,
+        "currency": "INR",
+        "unit": "KG"
+      },
+      "potential_savings_percentage": 25.65,
+      "feasibility": "moderate",
+      "confidence": "medium",
+      "top_production_region": "Bharuch, Gujarat"
+    },
+    {
+      "product_id": 4,
+      "hs_code": "841370",
+      "product_name": "Submersible and Centrifugal Industrial Pumps",
+      "sector": "machinery",
+      "opportunity_score": 79.8,
+      "rank": 4,
+      "import_cost": {
+        "value": 20720.00,
+        "currency": "INR",
+        "unit": "PIECES"
+      },
+      "domestic_cost": {
+        "value": 15120.00,
+        "currency": "INR",
+        "unit": "PIECES"
+      },
+      "potential_savings_percentage": 27.03,
+      "feasibility": "high",
+      "confidence": "high",
+      "top_production_region": "Bengaluru Urban, Karnataka"
+    }
+  ]
+}
