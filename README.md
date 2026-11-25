@@ -1,9 +1,6 @@
 # 🇮🇳 SWADESHI INTELLIGENCE
 ### AI-Assisted National Import Substitution & Domestic Production Intelligence Platform
 
-> **HackWithAditya 2026** — National Level Hackathon  
-> *Target Submission:* 25 November 2026 | *Team Size:* 4 Developers
-
 ---
 
 ## 📌 Executive Summary
