@@ -1,33 +1,37 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-
-from backend.app.database import get_db
-from backend.app.models.models import ImportRecord, Product
+from fastapi import APIRouter
+from backend.app.database import get_db_connection
 from backend.app.schemas.schemas import ImportSummaryResponse, SectorSummary
 
 router = APIRouter(prefix="/imports", tags=["Imports"])
 
 
 @router.get("/summary", response_model=ImportSummaryResponse)
-def get_import_summary(db: Session = Depends(get_db)):
-    # Calculate totals
-    total_val = db.query(func.sum(ImportRecord.import_value_usd)).scalar() or 0.0
-    total_products = db.query(func.count(Product.id)).scalar() or 0
+def get_import_summary():
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    # Sector breakdown
-    sector_query = (
-        db.query(Product.sector, func.sum(ImportRecord.import_value_usd))
-        .join(ImportRecord, Product.id == ImportRecord.product_id)
-        .group_by(Product.sector)
-        .all()
-    )
+    cursor.execute("SELECT SUM(import_value_usd) FROM import_records")
+    total_val = cursor.fetchone()[0] or 0.0
+
+    cursor.execute("SELECT COUNT(*) FROM products")
+    total_products = cursor.fetchone()[0] or 0
+
+    cursor.execute("""
+        SELECT p.sector, SUM(r.import_value_usd) as sector_val
+        FROM products p
+        JOIN import_records r ON p.id = r.product_id
+        GROUP BY p.sector
+    """)
+    rows = cursor.fetchall()
 
     sectors = {}
-    for sector, val in sector_query:
-        val_float = float(val or 0.0)
+    for row in rows:
+        sector = row["sector"]
+        val_float = float(row["sector_val"] or 0.0)
         pct = (val_float / float(total_val) * 100.0) if total_val > 0 else 0.0
         sectors[sector] = SectorSummary(value_usd=val_float, percentage=round(pct, 1))
+
+    conn.close()
 
     return ImportSummaryResponse(
         financial_year="2024-25",

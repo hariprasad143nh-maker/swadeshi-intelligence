@@ -1,9 +1,6 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Query
 from typing import Optional
-
-from backend.app.database import get_db
-from backend.app.models.models import Product, ProductionAssessment, ProductionRegion
+from backend.app.database import get_db_connection
 from backend.app.schemas.schemas import (
     OpportunitiesResponse,
     OpportunityItem,
@@ -20,53 +17,64 @@ def get_opportunities(
     sector: Optional[str] = Query(None, description="Filter by sector"),
     min_savings: Optional[float] = Query(None, description="Minimum potential savings percentage"),
     limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db),
 ):
-    query = (
-        db.query(Product, ProductionAssessment)
-        .join(ProductionAssessment, Product.id == ProductionAssessment.product_id)
-    )
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    sql = """
+        SELECT 
+            p.id, p.hs_code, p.name, p.sector,
+            a.import_cost, a.domestic_cost, a.feasibility_score, a.confidence, a.cost_basis,
+            reg.state, reg.district
+        FROM products p
+        JOIN production_assessments a ON p.id = a.product_id
+        LEFT JOIN production_regions reg ON p.id = reg.product_id
+        WHERE 1=1
+    """
+    params = []
 
     if sector:
-        query = query.filter(Product.sector == sector.lower())
+        sql += " AND p.sector = ?"
+        params.append(sector.lower())
 
-    results = query.all()
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    conn.close()
+
     opportunities = []
 
-    for rank, (prod, assess) in enumerate(results, start=1):
-        imp_cost = float(assess.import_cost)
-        dom_cost = float(assess.domestic_cost)
+    for rank, row in enumerate(rows, start=1):
+        imp_cost = float(row["import_cost"])
+        dom_cost = float(row["domestic_cost"])
         savings_pct = round(((imp_cost - dom_cost) / imp_cost * 100), 2) if imp_cost > 0 else 0.0
 
         if min_savings is not None and savings_pct < min_savings:
             continue
 
-        # Get top region
-        top_region = db.query(ProductionRegion).filter(ProductionRegion.product_id == prod.id).order_by(ProductionRegion.suitability_score.desc()).first()
-        region_str = f"{top_region.district}, {top_region.state}" if top_region else "Pan-India Clusters"
-
-        unit_str = assess.cost_basis or "KG"
+        region_str = f"{row['district']}, {row['state']}" if row["state"] else "Pan-India Clusters"
+        unit_str = row["cost_basis"] or "KG"
+        if unit_str.startswith("Per "):
+            unit_str = unit_str[4:]
 
         opportunities.append(
             OpportunityItem(
-                product_id=prod.id,
-                hs_code=prod.hs_code,
-                product_name=prod.name,
-                sector=prod.sector,
-                opportunity_score=float(assess.feasibility_score),
+                product_id=row["id"],
+                hs_code=row["hs_code"],
+                product_name=row["name"],
+                sector=row["sector"],
+                opportunity_score=float(row["feasibility_score"]),
                 rank=rank,
                 import_cost=CostMetric(value=imp_cost, currency="INR", unit=unit_str),
                 domestic_cost=CostMetric(value=dom_cost, currency="INR", unit=unit_str),
                 potential_savings_percentage=savings_pct,
-                feasibility="high" if assess.feasibility_score >= 80 else "moderate",
-                confidence=assess.confidence,
+                feasibility="high" if row["feasibility_score"] >= 80 else "moderate",
+                confidence=row["confidence"] or "medium",
                 top_production_region=region_str,
             )
         )
 
     # Sort by opportunity score descending
     opportunities.sort(key=lambda x: x.opportunity_score, reverse=True)
-    # Re-rank
     for i, opp in enumerate(opportunities[:limit], start=1):
         opp.rank = i
 
@@ -77,7 +85,6 @@ def get_opportunities(
 def get_recommendations(
     target_user: str = Query("farmer", description="farmer, msme, manufacturer, or policymaker")
 ):
-    # Standard persona recommendation feed
     recs = [
         RecommendationItem(
             product_id=1,
@@ -102,6 +109,14 @@ def get_recommendations(
             action="Utilize bulk drug park common effluent facilities and fermentation tanks",
             optimal_states=["Gujarat", "Andhra Pradesh", "Telangana"],
             expected_margin="25-30%",
+        ),
+        RecommendationItem(
+            product_id=4,
+            name="Precision Centrifugal & Submersible Industrial Pumps",
+            annual_import_market="₹6,200 Crores",
+            action="Scale high-efficiency impellers and motor winding units with MSME tooling clusters",
+            optimal_states=["Karnataka", "Tamil Nadu", "Gujarat"],
+            expected_margin="26-32%",
         ),
     ]
 

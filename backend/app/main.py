@@ -2,14 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from backend.app.database import engine, Base
+from backend.app.database import init_db
 from backend.app.schemas.schemas import HealthResponse
 from backend.app.routers.products import router as products_router
 from backend.app.routers.imports import router as imports_router
 from backend.app.routers.opportunities import router as opportunities_router
 
-# Auto-create database tables on startup
-Base.metadata.create_all(bind=engine)
+# Initialize database schema
+init_db()
 
 app = FastAPI(
     title="Swadeshi Intelligence API",
@@ -18,7 +18,7 @@ app = FastAPI(
 )
 
 # CORS setup
-origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:4173").split(",")
 
 app.add_middleware(
     CORSMiddleware,
